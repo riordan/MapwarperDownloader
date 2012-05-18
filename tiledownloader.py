@@ -22,22 +22,32 @@ def setCredentials():
 
 	print "Thank you"
 
-def getLayerJSON(id):
-	response = urllib2.urlopen('http://maps.nypl.org/warper/layers/%s/maps' %id)
+def getLayerJSON(id, currentpage=0, totalpages=None, allLayers = []):
+	
+	#Recursive end case
+	if currentpage >= totalpages and totalpages != None:
+		return allLayers
+
+	currentpage +=1
+
+	response = urllib2.urlopen('http://maps.nypl.org/warper/layers/%s/maps.json?page=%s' %(id, currentpage))
 	layerJSON = response.read()
-	mjson = json.loads(layerJSON)
+	
+	#Figure out how many pages there actually are if this is a first pass
+	if totalpages == None:
+		print "Assigning actual number of pages"
+		totalpages = json.loads(layerJSON)['total_pages']
 
-	if mjson['total_pages']>1:
-		print "Aw SNAP! More than 50 items. Don't blame me, it's Topomancy's fault. \nI'll get the first 50 for you though"
-	else:
-		print "AWESOME! We can download the whole layer for ya."
+	allLayers.append(layerJSON)
 
-	return (mjson, layerJSON)
+	return getLayerJSON(id,currentpage,totalpages, allLayers)
 
-def getMapIDs(layerJSON):
+
+def getMapIDs(layerJSONs):
 	mapIDs = []
-	for map in layerJSON['items']:
-		mapIDs.append(map['id'])
+	for layer in layerJSONs:
+		for map in layer['items']:
+			mapIDs.append(map['id'])
 	return mapIDs
 
 def dlGeoTiff(mapID):
@@ -83,18 +93,32 @@ def dlManager(idList):
 			print "Waiting 30 seconds to not murder the map server"
 			time.sleep(30)
 
+def stringstoJSONs(stringArray):
+	jsonArray = []
+	for js in stringArray:
+		jsonArray.append(json.loads(js))
+	return jsonArray
+
+
+
+#Takes paginated JSON and writes to file
+def writeMetadata(jsonLayers, layerID):
+	count = 1
+	for layer in jsonLayers:
+		md = open('metadatalayer_%s_%s.json'%(count,layerID),'w')
+		md.write(layer)
+		md.close()
+		count += 1
 
 layerID = getLayerID()
-layerJSON, jsontext = getLayerJSON(layerID)
+layersStrings = getLayerJSON(layerID)
+
+writeMetadata(layersStrings, layerID)
+
+layersJSONs = stringstoJSONs(layersStrings)
+
+mapIDs = getMapIDs(layersJSONs)
+
 setCredentials()
-
-# Save LayerJSON and folder
-
-md = open('metadatalayer_%s.json'%layerID,'w')
-md.write(jsontext)
-md.close()
-
-
-mapIDs = getMapIDs(layerJSON)
 
 dlManager(mapIDs)
