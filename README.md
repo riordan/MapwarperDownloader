@@ -16,6 +16,7 @@ HOWTO
 
 What you can do
 ==============
-Use images to create layers in [Tilemill](http://mapbox.com/tilemill/) (Note - requires specifiying WGS84 as the SRS.
-Lots of other things! Please share them with us. Drop us a line at [labs@nypl.org](mailto:labs@nypl.org).
+* Use images to create layers in [Tilemill](http://mapbox.com/tilemill/) (Note - requires specifiying WGS84 as the SRS.)
+* Import them into any GIS software
+* Lots of other things! Please share them with us. Drop us a line at [labs@nypl.org](mailto:labs@nypl.org).
 
